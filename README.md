@@ -250,6 +250,10 @@ arguments, the available `translate_document()` and
 
 - `formality`: same as in [Text translation options](#text-translation-options).
 - `glossary`: same as in [Text translation options](#text-translation-options).
+- `output_format`: (`translate_document()` only)
+  file extension of desired format of translated file, for example: `'pdf'`. If
+  unspecified, by default the translated file will be in the same format as the
+  input file. 
 
 ### Glossaries
 
@@ -523,6 +527,24 @@ translator = deepl.Translator(..., verify_ssl=False)
 
 This option is passed to the underlying `requests` session as the `verify`
 option, see the [documentation for requests][requests-verify-ssl-docs].
+
+#### Configure automatic retries
+
+This SDK will automatically retry failed HTTP requests (if the failures could
+be transient, e.g. a HTTP 429 status code). This behaviour can be configured
+in `http_client.py`, for example by default the number of retries is 5. This
+can be changed to 3 as follows:
+
+```python
+import deepl
+
+deepl.http_client.max_network_retries = 3
+t = deepl.Translator(...)
+t.translate_text(...)
+```
+
+You can configure the timeout `min_connection_timeout` the same way, as well
+as set a custom `user_agent`, see the next section.
 
 #### Anonymous platform information
 
