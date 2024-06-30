@@ -48,6 +48,7 @@ from typing import (
     Type,
 )
 import urllib.parse
+from .util import log_info
 
 
 class HttpRequest:
@@ -75,16 +76,11 @@ class HttpResponse:
         self.content = content
         self.headers = headers
 
-        content_type = "Content-Type"
-        if content_type in self.headers and self.headers[
-            content_type
-        ].startswith(
-            "application/json"
-        ):  # TODO improve json-compatible check
+        try:
             self.json = json_module.loads(self.content)
-        else:
+        except json_module.JSONDecodeError:
+            log_info("JSON decoding failed!")
             self.json = None
-
         # TODO Handle streams
 
 
@@ -164,7 +160,7 @@ class TranslatorBase:
     def _raise_for_status(
         self,
         response: HttpResponse,
-        context: BaseContext
+        context: BaseContext,
         # status_code: int,
         # content: Union[str, requests.Response],
         # json: Any,
