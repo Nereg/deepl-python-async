@@ -18,6 +18,7 @@ class AioHttpHttpClient(IAsyncHttpClient):
         verify_ssl: Union[bool, str, None] = None,
     ):
         self._ssl = verify_ssl
+        self._proxy = proxy
         # if we were passed a path to a file/folder with CA certificates
         if type(self._ssl) is str:
             # pass them onto SSL context
@@ -28,11 +29,16 @@ class AioHttpHttpClient(IAsyncHttpClient):
                         cafile=self._ssl,
                         capath=self._ssl,
                     )
-                )
+                ),
+                # replicate request's behavior
+                # https://docs.aiohttp.org/en/stable/client_advanced.html#proxy-support
+                trust_env=True if self._proxy is not None else False,
             )
         else:
             # create default client session
-            self._session = aiohttp.ClientSession()
+            self._session = aiohttp.ClientSession(
+                trust_env=True if self._proxy is not None else False,
+            )
         # TODO proxy
 
         super().__init__()
@@ -42,6 +48,27 @@ class AioHttpHttpClient(IAsyncHttpClient):
 
     def prepare_request(self, request: HttpRequest) -> IPreparedRequest:
         return IPreparedRequest(request)
+
+    def return_proxy_url(self) -> str:
+        """
+        Returns URL of the proxy to use.
+        Handles choosing what to use in the dict that requests support
+        """
+        if type(self._proxy) is str:
+            return self._proxy
+        elif type(self._proxy) is dict:
+            # prefer http proxies, see:
+            # https://docs.aiohttp.org/en/stable/client_advanced.html#proxy-support
+            if "http" in self._proxy:
+                return self._proxy["http"]
+            elif "https" in self._proxy:
+                return self._proxy["https"]
+            else:
+                raise ValueError(
+                    "No suitable proxy scheme found!"
+                )  # TODO: implement this kind of error in exceptions.py
+        else:
+            raise ValueError("Invalid proxy type!")
 
     async def send_async_request(
         self, prepared_request: IPreparedRequest, timeout: float
@@ -56,6 +83,8 @@ class AioHttpHttpClient(IAsyncHttpClient):
             json=request.json,
             # disable the SSL verification, if we don't have a path to certificates
             ssl=self._ssl if type(self._ssl) is bool else None,
+            # pass the proxy URL, if we have a proxy at all
+            proxy=self.return_proxy_url() if self._proxy is not None else None,
             # stream=request.stream, TODO
         ) as response:
             content = await response.text()
