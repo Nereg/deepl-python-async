@@ -93,6 +93,17 @@ async def test_translate_document_with_retry_and_wait(
 @needs_async
 @pytest.mark.asyncio
 # @needs_mock_proxy_server
-async def test_proxy_usag(async_translator_factory_with_proxy):
+async def test_proxy_usage(async_translator_factory_with_proxy):
     async with async_translator_factory_with_proxy() as async_translator:
-        await async_translator.get_usage()
+        usage = await async_translator.get_usage()
+        assert "Usage this billing period" in str(usage)
+
+@needs_async
+@pytest.mark.asyncio
+# @needs_mock_proxy_server
+async def test_ssl_bypass(async_translator_factory_with_proxy):
+    # test the case where it verifies SSL
+    with pytest.raises(deepl.exceptions.ConnectionException):
+        async with async_translator_factory_with_proxy(verify_ssl=None) as async_translator:
+            await async_translator.get_usage()
+

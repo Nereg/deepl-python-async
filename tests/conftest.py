@@ -172,8 +172,8 @@ def async_translator_factory_with_proxy(server) -> Callable[[], "deepl.Translato
     """Returns a factory to create a deepl.TranslatorAsync to use in all tests
     taking a parameter 'translator'."""
 
-    def factory() -> deepl.TranslatorAsync:
-        return _make_translator(server, use_async=True, proxy=server.proxy, verify_ssl=False)
+    def factory(verify_ssl=False) -> deepl.TranslatorAsync:
+        return _make_translator(server, use_async=True, proxy=server.proxy, verify_ssl=verify_ssl)
 
     return factory
 
