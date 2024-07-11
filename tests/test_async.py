@@ -3,7 +3,7 @@
 # license that can be found in the LICENSE file.
 import pytest
 import deepl
-from .conftest import example_text, needs_async
+from .conftest import example_text, needs_async, needs_mock_proxy_server
 
 pytest_plugins = ("pytest_asyncio",)
 default_lang_args = {"target_lang": "DE", "source_lang": "EN"}
@@ -89,3 +89,10 @@ async def test_translate_document_with_retry_and_wait(
             **default_lang_args,
         )
     assert example_document_translation == output_document_path.read_text()
+
+@needs_async
+@pytest.mark.asyncio
+# @needs_mock_proxy_server
+async def test_proxy_usag(async_translator_factory_with_proxy):
+    async with async_translator_factory_with_proxy() as async_translator:
+        await async_translator.get_usage()

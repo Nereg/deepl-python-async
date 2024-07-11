@@ -131,13 +131,13 @@ def server(config):
     return Server()
 
 
-def _make_translator(server, auth_key=None, proxy=None, use_async=False):
+def _make_translator(server, auth_key=None, proxy=None, use_async=False, verify_ssl=None):
     """Returns a deepl.Translator for the specified server test fixture.
     The server auth_key is used unless specifically overridden."""
     if auth_key is None:
         auth_key = server.auth_key
     translator = (deepl.TranslatorAsync if use_async else deepl.Translator)(
-        auth_key, server_url=server.server_url, proxy=proxy
+        auth_key, server_url=server.server_url, proxy=proxy, verify_ssl=verify_ssl,
     )
 
     # If the server test fixture has custom headers defined, update the
@@ -167,6 +167,15 @@ def async_translator_factory(server) -> Callable[[], "deepl.TranslatorAsync"]:
 
     return factory
 
+@pytest.fixture
+def async_translator_factory_with_proxy(server) -> Callable[[], "deepl.TranslatorAsync"]:
+    """Returns a factory to create a deepl.TranslatorAsync to use in all tests
+    taking a parameter 'translator'."""
+
+    def factory() -> deepl.TranslatorAsync:
+        return _make_translator(server, use_async=True, proxy=server.proxy, verify_ssl=False)
+
+    return factory
 
 @pytest.fixture
 def translator_with_random_auth_key(server):
