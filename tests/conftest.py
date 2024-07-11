@@ -394,7 +394,8 @@ needs_mock_server = pytest.mark.skipif(
 #  real server is used or mock proxy server is not configured
 needs_mock_proxy_server = pytest.mark.skipif(
     Config().mock_proxy_server_port is None
-    or Config().mock_server_port is None,
+    or Config().proxy_url is None, 
+    # or Config().mock_server_port is None,
     reason="this test requires a mock proxy server",
 )
 # Decorate test functions with "@needs_real_server" to skip them if a mock
