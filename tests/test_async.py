@@ -3,7 +3,7 @@
 # license that can be found in the LICENSE file.
 import pytest
 import deepl
-from conftest import example_text, needs_async
+from .conftest import example_text, needs_async
 
 pytest_plugins = ("pytest_asyncio",)
 default_lang_args = {"target_lang": "DE", "source_lang": "EN"}
