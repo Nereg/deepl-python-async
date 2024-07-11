@@ -3,6 +3,7 @@
 # license that can be found in the LICENSE file.
 import asyncio
 from typing import Union, Dict, Iterator, Optional
+import ssl
 
 from multidict import CIMultiDictProxy
 
@@ -87,9 +88,23 @@ class AioHttpHttpClient(IAsyncHttpClient):
             raise ImportError(
                 "aiohttp import failed, cannot use aiohttp client"
             ) from aiohttp_import_error
-
-        self._session = aiohttp.ClientSession()
-        # TODO proxy, verify_ssl
+        self._ssl = verify_ssl
+        # if we were passed a path to a file/folder with CA certificates
+        if type(self._ssl) is str:
+            # pass them onto SSL context
+            self._session = aiohttp.ClientSession(
+                connector=aiohttp.TCPConnector(
+                    ssl_context=ssl.create_default_context(
+                        ssl.Purpose.SERVER_AUTH,
+                        cafile=self._ssl,
+                        capath=self._ssl,
+                    )
+                )
+            )
+        else:
+            # create default client session
+            self._session = aiohttp.ClientSession()
+        # TODO proxy
 
         super().__init__()
 
@@ -113,6 +128,8 @@ class AioHttpHttpClient(IAsyncHttpClient):
                 data=prepared_request.data,
                 json=prepared_request.json,
                 timeout=aiohttp.ClientTimeout(total=timeout),
+                # disable the SSL verification, if we don't have a path to certificates
+                ssl=self._ssl if type(self._ssl) is bool else None,
             )
             text = None
             if prepared_request.request.stream_chunks:
